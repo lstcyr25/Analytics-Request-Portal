@@ -128,8 +128,8 @@ def assign_request(
             event_type="request_assigned",
             title="Analyst assigned",
             message=(
-                f'Your request "{request["title"]}" '
-                "has been assigned to an analyst."
+                f'Your request "{request["title"]}" has been assigned to '
+                f'{analyst.get("full_name") or "an analyst"}.'
             ),
         )
 

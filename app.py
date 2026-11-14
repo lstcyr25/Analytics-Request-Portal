@@ -878,7 +878,7 @@ def render_login_page():
 
             email = st.text_input(
                 "Username / Email",
-                placeholder="Enter your email address",
+                placeholder="Enter your username or email",
             )
 
             password = st.text_input(

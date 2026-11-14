@@ -1,5 +1,8 @@
 
-from database.supabase_client import get_supabase_client
+from database.supabase_client import (
+    get_service_role_client,
+    get_supabase_client,
+)
 
 
 VALID_ROLES = {
@@ -9,18 +12,19 @@ VALID_ROLES = {
 }
 
 
-def sign_in(email: str, password: str) -> dict:
-    """
-    Authenticate a user with Supabase Auth.
 
-    The authenticated client is isolated to the current
-    Streamlit browser session.
+def sign_in(identifier: str, password: str) -> dict:
+    """
+    Authenticate using either username or email.
+
+    Username lookup uses the trusted backend client.
+    Authentication remains isolated to the browser session.
     """
 
-    if not isinstance(email, str) or not email.strip():
+    if not isinstance(identifier, str) or not identifier.strip():
         return {
             "success": False,
-            "error": "A valid email address is required.",
+            "error": "Enter your username or email address.",
         }
 
     if not isinstance(password, str) or not password:
@@ -30,11 +34,37 @@ def sign_in(email: str, password: str) -> dict:
         }
 
     try:
+        login_identifier = identifier.strip()
+
+        if "@" in login_identifier:
+            login_email = login_identifier.lower()
+        else:
+            service_supabase = get_service_role_client()
+
+            profile_response = (
+                service_supabase.table("users")
+                .select("email")
+                .ilike("username", login_identifier)
+                .eq("is_active", True)
+                .maybe_single()
+                .execute()
+            )
+
+            profile = profile_response.data
+
+            if not profile:
+                return {
+                    "success": False,
+                    "error": "Invalid username or password.",
+                }
+
+            login_email = profile["email"]
+
         supabase = get_supabase_client()
 
         response = supabase.auth.sign_in_with_password(
             {
-                "email": email.strip(),
+                "email": login_email,
                 "password": password,
             }
         )
@@ -51,11 +81,12 @@ def sign_in(email: str, password: str) -> dict:
             "session": response.session,
         }
 
-    except Exception as error:
+    except Exception:
         return {
             "success": False,
-            "error": str(error),
+            "error": "Invalid username/email or password.",
         }
+
 
 
 def get_current_profile() -> dict:

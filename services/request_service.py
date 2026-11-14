@@ -393,7 +393,10 @@ def submit_request(
                 request_id=request_id,
                 event_type="request_assigned",
                 title="Analyst assigned",
-                message=f'Your request "{title}" has been assigned to an analyst.',
+                message=(
+                    f'Your request "{title}" has been assigned to '
+                    f'{analyst.get("full_name") or "an analyst"}.'
+                ),
             )
 
             assignment_notification = _send_templated_notification(
